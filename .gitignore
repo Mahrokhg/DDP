@@ -4,9 +4,7 @@ __pycache__/
 *$py.class
 
 # PyCharm project settings
-.idea
 .idea/
-
 # virtualenv
 .venv
 venv/
