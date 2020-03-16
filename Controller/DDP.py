@@ -26,7 +26,7 @@ class DDP:
         # Regularization Schedule(II.F)
         self._mu = 1.0
         self._mu_min = 1e-6
-        self._mu_max = 1e10
+        self._mu_max = 1e9
         self._delta_0 = 1.2
         self._delta = self._delta_0
         # Backtrack line search parameter
@@ -99,8 +99,9 @@ class DDP:
                 # Move forward
                 self._forward_pass(alpha)
                 break
-        # if not flag:
-        # TODO
+        if not flag:
+            print('[Warning] The optimal J value was not updated in backtrack search.')
+            # TODO
 
     def _backward_pass(self):
         # Check for non-PD
@@ -123,7 +124,7 @@ class DDP:
                     # Increase regularization term
                     self._increase_mu()
                     _flag_quu_is_pd = False
-                    print('[INFO] Non-PD Q_uu occurred at step ', i,'. mu is increased to ', self._mu, '.')
+                    print('[INFO] Non-PD Q_uu occurred at step ', i, '. mu is increased to ', self._mu, '.')
                     if self.diverged:
                         return
                     # TODO

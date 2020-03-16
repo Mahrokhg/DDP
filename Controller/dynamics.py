@@ -10,10 +10,10 @@ class Dynamics:
                  b=1,
                  s=1,
                  v_max=10,
-                 u_max=10,
+                 u_max=1,
                  n_1=100,
                  n_2=100,
-                 n_u=100
+                 n_u=1e10
                  ):
         """Constructs an Inverted Pendulum model
                 Args:
