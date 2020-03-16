@@ -9,9 +9,11 @@ class DDP:
     def __init__(self, dynamics, cost, N, max_iter=20, tol=1e-3):
         """Constructs an iLQR solver.
         Args:
-            dynamics: Plant dynamics.
-            cost: Cost function.
-            N: Horizon length.
+            dynamics: Plant dynamics
+            cost: Cost function
+            N: Horizon length
+            max_iter: Maximum iterations of backward and forward passes
+            tol: Convergence criterion
         """
         self.dynamics = dynamics
         self.cost = cost
@@ -52,31 +54,38 @@ class DDP:
 
     def control(self, x0, us):
         """
-        Initialize trajectory
-        backward pass
-        forward pass,
-        stop when converge or reach iterMax
+        1. Initialize trajectory
+        2. Backward pass
+        3. Back-track line search
+        4. Forward pass
+        Stops when converged or reaches iterMax
         """
+        # 1. Initialize trajectory
         self._init_traj(x0, us)
-
+        # Iterations
         for i in range(self.max_iter):
             print('Iteration ', i)
+            # 2. Backward pass
             self._backward_pass()
-            print('Control gains ', self._k, self._K)
+            # print('Control gains ', self._k, self._K)
+            # 3. Back-track line search & 4. Forward pass
             self._line_search()
+            # Check for convergence
             if self.converged:
                 break
         return self.x_cur, self.u_cur
 
     def _line_search(self):
-        """Backtracking line search
+        """
+        Backtracking line search.
+        Only performs a forward pass if j_new < j_opt.
         """
         flag = False
         for alpha in self.alphas:
             x_new, u_new = self._forward_pass(alpha)
             j_new = self._trajectory_cost(x_new, u_new)
             if j_new < self.j_opt:
-                # check for convergence
+                # Check for convergence
                 if np.abs((self.j_opt - j_new) / self.j_opt) < self.tol:
                     self.converged = True
                 flag = True
@@ -89,6 +98,7 @@ class DDP:
                 self._forward_pass(alpha)
                 break
         # if not flag:
+        # TODO
 
     def _backward_pass(self):
         # Check for non-PD
@@ -112,7 +122,7 @@ class DDP:
                     self._increase_mu()
                     _flag_quu_is_pd = False
                     print('[INFO] Non-PD Q_uu occurred. mu is increased to ', self._mu, 'i ', i)
-                    break
+                    # TODO
                 # Eq (6)
                 k[i] = -np.linalg.solve(Q_uu, Q_u)
                 K[i] = -np.linalg.solve(Q_uu, Q_ux)
@@ -124,7 +134,7 @@ class DDP:
                 v_xx += K[i].T.dot(Q_ux) + Q_ux.T.dot(K[i])
                 v_xx = 0.5 * (v_xx + v_xx.T)  # To maintain symmetry.
         # Store the gains
-        print('gains stored')
+        print('[INFO] Gains stored')
         self._k = np.array(k)
         self._K = np.array(K)
 
@@ -148,6 +158,7 @@ class DDP:
         Updates the derivative matrices.
         Args:
         """
+        self.u_cur = us
         self.x_cur[0] = x0
         for i in range(self.N):
             self.x_cur[i + 1] = self.dynamics.f(self.x_cur[i], us[i])
