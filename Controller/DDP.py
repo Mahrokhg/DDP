@@ -66,7 +66,7 @@ class DDP:
             self._line_search()
             if self.converged:
                 break
-        return self.XList, self.curU
+        return self.x_cur, self.u_cur
 
     def _line_search(self):
         """Backtracking line search
@@ -120,13 +120,6 @@ class DDP:
                 v_x = Q_x + K[i].T.dot(Q_uu).dot(k[i])
                 v_x += K[i].T.dot(Q_u) + Q_ux.T.dot(k[i])
                 # Eq (11c)
-                print('i ', i)
-                print('Q_xx ', Q_xx)
-                print('K[i] ', K[i])
-                print('Q_uu ', Q_uu)
-                print('K[i].T.dot(Q_uu).dot(K[i]) ', K[i].T.dot(Q_uu).dot(K[i]))
-                print('Q_ux ', Q_ux)
-                print('K[i].T.dot(Q_ux) + Q_ux.T.dot(K[i]) ', K[i].T.dot(Q_ux) + Q_ux.T.dot(K[i]))
                 v_xx = Q_xx + K[i].T.dot(Q_uu).dot(K[i])
                 v_xx += K[i].T.dot(Q_ux) + Q_ux.T.dot(K[i])
                 v_xx = 0.5 * (v_xx + v_xx.T)  # To maintain symmetry.
