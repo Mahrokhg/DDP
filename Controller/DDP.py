@@ -22,7 +22,7 @@ class DDP:
         self.max_iter = max_iter
         self.tol = tol
         self.converged = False
-        self.flag_j_update = False
+        self.diverged = False
         # Regularization Schedule(II.F)
         self._mu = 1.0
         self._mu_min = 1e-6
@@ -67,7 +67,9 @@ class DDP:
             print('Iteration ', i)
             # 2. Backward pass
             self._backward_pass()
-            # print('Control gains ', self._k, self._K)
+            if self.diverged:
+                print('[Error] Unsuccessful iteration.')
+                break
             # 3. Back-track line search & 4. Forward pass
             self._line_search()
             # Check for convergence
@@ -121,7 +123,9 @@ class DDP:
                     # Increase regularization term
                     self._increase_mu()
                     _flag_quu_is_pd = False
-                    print('[INFO] Non-PD Q_uu occurred. mu is increased to ', self._mu, 'i ', i)
+                    print('[INFO] Non-PD Q_uu occurred at step ', i,'. mu is increased to ', self._mu, '.')
+                    if self.diverged:
+                        return
                     # TODO
                 # Eq (6)
                 k[i] = -np.linalg.solve(Q_uu, Q_u)
@@ -156,7 +160,6 @@ class DDP:
         """Compute the trajectory from the starting
         state x0 by applying the control path us.
         Updates the derivative matrices.
-        Args:
         """
         self.u_cur = us
         self.x_cur[0] = x0
@@ -204,14 +207,15 @@ class DDP:
     def _trajectory_cost(self, x, u):
         cost = 0
         for i in range(self.N):
-            cost += self.cost.l(x[i], u[i], i)
+            cost += self.cost.l(x[i], u[i])
         # Final cost
-        cost += self.cost.l(x[-1], None, self.N)
+        cost += self.cost.l(x[-1], None, final=True)
         return cost
 
     def _increase_mu(self):
         if self._mu == self._mu_max:
-            print('[Warning:] Mu reached the maximum amount. Increase not possible')
+            print('[Warning:] Mu reached the maximum amount. Increase not possible.')
+            self.diverged = True
         self._delta = max(1.0, self._delta) * self._delta_0
         self._mu = max(self._mu_min, self._mu * self._delta)
         self._mu = min(self._mu, self._mu_max)
