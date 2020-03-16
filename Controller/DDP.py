@@ -30,7 +30,7 @@ class DDP:
         self._delta_0 = 1.2
         self._delta = self._delta_0
         # Backtrack line search parameter
-        self.alphas = [1, 0.8, 0.6, 0.4, 0.2]
+        self.alphas = np.linspace(1, 0, num=20, endpoint=False)
         # Controller gains
         self._k = np.zeros((N, dynamics.action_size))
         self._K = np.zeros((N, dynamics.action_size, dynamics.state_size))
